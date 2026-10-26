@@ -1,0 +1,32 @@
+# Secretos: la clave de la API nunca entra en git
+.env
+.env.*
+!.env.example
+
+# Datos: audios, transcripciones, perfiles y conjuntos de evaluación
+datos/
+pruebas/
+salida*/
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.webm
+
+# Registros de llamadas al modelo
+registro*.jsonl
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Sistema y editores
+.DS_Store
+.idea/
+.vscode/
