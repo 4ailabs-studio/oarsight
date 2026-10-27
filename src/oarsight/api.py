@@ -90,6 +90,9 @@ class ChatClient:
         extra: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Run one chat completion and return the raw response, logging usage."""
+        if "contributor" in model.lower():
+            # Contributor-mode models let the provider train on our content. Consultations must never go there.
+            raise ValueError(f"Refusing Contributor-mode model {model!r}: use a Standard-mode model.")
         body: dict[str, Any] = {"model": model, "messages": messages}
         if json_output:
             body["response_format"] = {"type": "json_object"}

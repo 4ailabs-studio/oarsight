@@ -48,7 +48,7 @@ Oarsight is a **communication-skills training tool for clinicians**. It evaluate
 | Simulated patient for voice practice | Muse Wonder + Muse Voice Transcribe (realtime) |
 | Private mode for confidential sessions | Muse Spark Open, served on partner endpoints or self-hosted |
 
-**Design principle: the model proposes, the code decides.** Every quote is checked against the transcript, metrics are computed in code, and every suggested phrasing is re-coded to confirm it is the skill it claims to be. Segments that cannot be verified are shown as unverified and never count toward feedback.
+**Design principle: the model proposes, the code decides.** Every quote is checked against the transcript, metrics are computed in code, and every suggested phrasing is re-coded to confirm it is the skill it claims to be. Segments that cannot be verified are shown as unverified and never count toward feedback. The full list, with what is already implemented, is in [docs/GUARDRAILS.md](docs/GUARDRAILS.md).
 
 ## Evaluation plan
 

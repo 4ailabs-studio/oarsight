@@ -40,3 +40,5 @@ Later the same day:
 - `oarsight prepare` and `oarsight codebook` commands; usage log marks calls without a known price instead of counting them as free.
 - 25 offline tests.
 - Real run on the fictional consultation with **both Muse Wonder and Muse Spark Open**: identical roles (both verified by quote) and the same 36 utterances (17 clinician, 19 patient).
+- [`docs/GUARDRAILS.md`](GUARDRAILS.md): catalog of every guardrail (scope, privacy, transcription fidelity, speakers, coding, feedback, agents, simulated patient, cost), each marked as implemented or planned with its day.
+- New guardrail in code: Contributor-mode models are refused before any request is sent, so consultation content can never be used for training. 26 offline tests.

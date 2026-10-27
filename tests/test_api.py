@@ -62,6 +62,15 @@ def test_retries_rate_limits_then_succeeds(monkeypatch):
     assert calls["n"] == 3
 
 
+def test_contributor_mode_models_are_refused_before_any_request():
+    def handler(request):
+        raise AssertionError("no request should be sent")
+
+    client = ChatClient("k", transport=httpx.MockTransport(handler))
+    with pytest.raises(ValueError, match="Contributor"):
+        client.chat_json("s", "muse-spark-1.3-contributor", "sys", "user")
+
+
 def test_client_errors_are_not_retried():
     client = ChatClient("k", transport=httpx.MockTransport(lambda r: httpx.Response(400, text="bad request")))
     with pytest.raises(ApiError) as exc:
