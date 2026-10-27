@@ -4,6 +4,8 @@ Oarsight gives feedback to clinicians about real conversations with patients. Wr
 
 **Principle: the model proposes, the code decides.** Language models may label, select, and phrase; deterministic code checks their output against the transcript and the rules before anything reaches the clinician.
 
+The pattern of checks inside the agent's tools, claims checking, refusal escalation and sign-off follows Meta's verifiable-agents workshop ([legal-agent-workshop](https://github.com/meta-models/legal-agent-workshop)); the code here is our own.
+
 Status: ✅ implemented and tested · 🔜 planned (with the day it lands, see the [build log](BUILD_LOG.md)).
 ## 1. Scope: communication feedback, never medical advice
 | Guardrail | Status |
