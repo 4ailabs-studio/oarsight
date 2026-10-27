@@ -69,11 +69,17 @@ Oarsight is a **communication-skills training tool for clinicians**. It evaluate
 
 ## Setup
 
+Requires [uv](https://docs.astral.sh/uv/) and [ffmpeg](https://ffmpeg.org/).
+
 ```bash
-cp .env.example .env   # then add your MODEL_API_KEY
+cp .env.example .env          # then add your MODEL_API_KEY (and BASETEN_API_KEY for private mode)
+uv sync
+uv run oarsight check         # verify keys and connectivity
+uv run oarsight transcribe consultation.mp3
+uv run pytest                 # tests run offline
 ```
 
-More setup instructions will be added as the code lands.
+`transcribe` prints the transcript with speaker labels and timestamps, checks coverage, and exits with code 2 if the transcript misses too much of the detected speech. Session files are written to `datos/`, which is never committed.
 
 ## License
 
