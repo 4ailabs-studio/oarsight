@@ -67,6 +67,10 @@ Oarsight is a **communication-skills training tool for clinicians**. It evaluate
 - **AnnoMI** (Wu et al., ICASSP 2022), a dataset of expert-annotated MI demonstration transcripts released for research. It is used only for evaluation, is **not redistributed** in this repository, and is downloaded separately from [its official repository](https://github.com/uccollab/AnnoMI). Please cite the original paper if you use it.
 - **MITI 4.2.1** (Moyers, Manuel and Ernst). Oarsight's coding categories follow the behavior types described in the MITI. The codebook in this project is written in our own words; no text from the manual is reproduced.
 
+## Acknowledgements
+
+Some guardrail and evaluation patterns were inspired by the multi-agent workshop [JTapiaR/Evalmultiagente](https://github.com/JTapiaR/Evalmultiagente). No code was taken from it.
+
 ## Setup
 
 Requires [uv](https://docs.astral.sh/uv/) and [ffmpeg](https://ffmpeg.org/).
