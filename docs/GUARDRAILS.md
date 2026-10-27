@@ -5,9 +5,6 @@ Oarsight gives feedback to clinicians about real conversations with patients. Wr
 **Principle: the model proposes, the code decides.** Language models may label, select, and phrase; deterministic code checks their output against the transcript and the rules before anything reaches the clinician.
 
 Status: ✅ implemented and tested · 🔜 planned (with the day it lands, see the [build log](BUILD_LOG.md)).
-
-Several patterns here (treating input as data, naive-vs-protected comparison, counterfactual pairs, per-agent tool permissions) were inspired by the workshop [JTapiaR/Evalmultiagente](https://github.com/JTapiaR/Evalmultiagente). No code was taken from it; everything in Oarsight is written for this project.
-
 ## 1. Scope: communication feedback, never medical advice
 | Guardrail | Status |
 |---|---|
