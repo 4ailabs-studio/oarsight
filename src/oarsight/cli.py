@@ -2,6 +2,8 @@
 
     oarsight check                      # verify API keys and connectivity
     oarsight transcribe <audio>         # transcribe with speaker labels and check coverage
+    oarsight prepare <session-dir>      # assign speaker roles and split into utterances
+    oarsight codebook                   # print the coding scheme as Markdown
 """
 
 from __future__ import annotations
@@ -10,10 +12,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import coverage
+from . import coverage, utterances
 from .api import ApiError, ChatClient, TranscribeClient, baseten_client
+from .codebook import render_markdown
 from .config import SPARK_OPEN_BASETEN, MissingKeyError, load_settings
-from .transcription import transcribe_file
+from .llm import BACKENDS, make_model
+from .roles import assign_roles
+from .transcription import Transcript, transcribe_file
 from .usage import UsageLog
 
 
@@ -63,9 +68,37 @@ def _transcribe(audio_path: Path, out_dir: Path | None, keywords: list[str] | No
     )
     for gap in cov.gaps:
         print(f"  Gap without transcript: {gap.start:.0f}-{gap.end:.0f} s")
-    print(f"Cost: ${usage.total_cost:.4f} | saved to {session_dir / 'transcript.json'}")
+    print(f"Cost: {usage.cost_summary()} | saved to {session_dir / 'transcript.json'}")
     if not cov.complete:
         print("INCOMPLETE TRANSCRIPT: this session will not be analyzed.", file=sys.stderr)
+        return 2
+    return 0
+
+
+def _prepare(session_dir: Path, backend: str) -> int:
+    settings = load_settings()
+    transcript = Transcript.from_json((session_dir / "transcript.json").read_text(encoding="utf-8"))
+    usage = UsageLog(settings.data_dir / "usage.jsonl")
+    roles = assign_roles(transcript, make_model(backend, settings, usage))
+    utts = utterances.build_utterances(transcript, roles)
+    utterances.save(utts, session_dir / "utterances.json")
+
+    print(f"Roles ({backend}):")
+    for label, sr in roles.speakers.items():
+        mark = "verified" if sr.verified else "NOT verified"
+        print(f"  {label} -> {sr.role} ({sr.confidence}, evidence {mark})")
+    if roles.notes:
+        print(f"  Notes: {roles.notes}")
+    counts: dict[str, int] = {}
+    for u in utts:
+        counts[u.role] = counts.get(u.role, 0) + 1
+    print(f"Utterances: {len(utts)} " + " ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    long_ones = [u.id for u in utts if u.is_long]
+    if long_ones:
+        print(f"Long utterances to review: {', '.join(long_ones)}")
+    print(f"Cost: {usage.cost_summary()} | saved to {session_dir / 'utterances.json'}")
+    if roles.needs_confirmation:
+        print("NEEDS CONFIRMATION:", *roles.needs_confirmation, sep="\n  ", file=sys.stderr)
         return 2
     return 0
 
@@ -78,6 +111,11 @@ def main(argv: list[str] | None = None) -> int:
     tr.add_argument("audio", type=Path)
     tr.add_argument("--out", type=Path, default=None, help="session folder (default: datos/sessions/<name>)")
     tr.add_argument("--keyword", action="append", dest="keywords", help="vocabulary bias term (repeatable)")
+    pr = sub.add_parser("prepare", help="assign speaker roles and split into utterances")
+    pr.add_argument("session", type=Path, help="session folder containing transcript.json")
+    pr.add_argument("--model", choices=BACKENDS, default="wonder", help="spark-open = private mode on Baseten")
+    cb = sub.add_parser("codebook", help="print the coding scheme as Markdown")
+    cb.add_argument("--write", type=Path, default=None, help="write to a file instead of printing")
     args = parser.parse_args(argv)
 
     try:
@@ -85,6 +123,16 @@ def main(argv: list[str] | None = None) -> int:
             return _check()
         if args.command == "transcribe":
             return _transcribe(args.audio, args.out, args.keywords)
+        if args.command == "prepare":
+            return _prepare(args.session, args.model)
+        if args.command == "codebook":
+            text = render_markdown()
+            if args.write:
+                args.write.parent.mkdir(parents=True, exist_ok=True)
+                args.write.write_text(text + "\n", encoding="utf-8")
+            else:
+                print(text)
+            return 0
     except MissingKeyError as exc:
         print(exc, file=sys.stderr)
         return 1

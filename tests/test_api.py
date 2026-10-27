@@ -40,6 +40,15 @@ def test_chat_json_logs_usage(tmp_path):
     assert (tmp_path / "usage.jsonl").read_text().count("\n") == 1
 
 
+def test_cost_summary_flags_unpriced_calls():
+    from oarsight.usage import CallRecord
+
+    log = UsageLog()
+    log.add(CallRecord("a", "muse-spark-1.3", 1.0, cost_usd=0.01))
+    log.add(CallRecord("b", "meta-models/muse-spark-open-1026", 1.0, cost_usd=None))
+    assert log.cost_summary() == "$0.0100 + 1 call(s) without a known price (billed by the provider)"
+
+
 def test_retries_rate_limits_then_succeeds(monkeypatch):
     monkeypatch.setattr(api.time, "sleep", lambda s: None)
     calls = {"n": 0}

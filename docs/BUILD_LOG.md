@@ -30,3 +30,13 @@ Foundations, written from scratch:
 - `coverage.py`: the coverage check. Compares transcribed turns with the speech actually detected in the audio, reports gaps longer than 20 s, and refuses to analyze a session below 80 % coverage.
 - 16 automated tests (no network): chunking, speech detection, chunk merging, coverage, costs, JSON parsing, retries.
 - First real run on a fictional role-played consultation (4 min 40 s): 28 turns, both speakers separated, 100 % of detected speech covered, cost about $0.014.
+
+Later the same day:
+
+- `llm.py`: interchangeable backends. Every analysis stage can run on Muse Wonder, Muse Spark, or **Muse Spark Open on Baseten (private mode)** with the same code.
+- `roles.py`: maps each speaker label to clinician, patient or companion. The model must justify each role with literal quotes; the code verifies every quote and flags anything doubtful for human confirmation. The transcript is never modified.
+- `utterances.py`: deterministic split of turns into utterances (sentence punctuation and opening `¿`/`¡`). Each utterance is an exact substring of its turn, so later quotes stay traceable.
+- `codebook.py` and [`docs/CODEBOOK.md`](CODEBOOK.md): clinician behaviors and patient language, following MITI 4.2.1 categories, written in our own words with invented Mexican-Spanish examples and "not this" counter-examples aimed at the leniency we saw in early tests.
+- `oarsight prepare` and `oarsight codebook` commands; usage log marks calls without a known price instead of counting them as free.
+- 25 offline tests.
+- Real run on the fictional consultation with **both Muse Wonder and Muse Spark Open**: identical roles (both verified by quote) and the same 36 utterances (17 clinician, 19 patient).

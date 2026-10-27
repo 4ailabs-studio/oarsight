@@ -66,3 +66,11 @@ class UsageLog:
     @property
     def total_cost(self) -> float:
         return sum(r.cost_usd or 0.0 for r in self.records)
+
+    def cost_summary(self) -> str:
+        """Known cost, and a note when some calls have no known price (e.g. Baseten credits)."""
+        unpriced = sum(1 for r in self.records if r.cost_usd is None)
+        text = f"${self.total_cost:.4f}"
+        if unpriced:
+            text += f" + {unpriced} call(s) without a known price (billed by the provider)"
+        return text
