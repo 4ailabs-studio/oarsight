@@ -1,9 +1,10 @@
 """Command-line entry point.
 
-    oarsight check                      # verify API keys and connectivity
-    oarsight transcribe <audio>         # transcribe with speaker labels and check coverage
-    oarsight prepare <session-dir>      # assign speaker roles and split into utterances
-    oarsight codebook                   # print the coding scheme as Markdown
+oarsight check                      # verify API keys and connectivity
+oarsight transcribe <audio>         # transcribe with speaker labels and check coverage
+oarsight prepare <session-dir>      # assign speaker roles and split into utterances
+oarsight code <session-dir>         # code utterances and compute metrics
+oarsight codebook                   # print the coding scheme as Markdown
 """
 
 from __future__ import annotations
@@ -12,10 +13,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import coverage, utterances
-from .api import ApiError, ChatClient, TranscribeClient, baseten_client
+from . import coding, coverage, metrics, utterances
+from .api import ApiError, ChatClient, TranscribeClient, baseten_client, fireworks_client
 from .codebook import render_markdown
-from .config import SPARK_OPEN_BASETEN, MissingKeyError, load_settings
+from .config import SPARK_OPEN_BASETEN, SPARK_OPEN_FIREWORKS, MissingKeyError, load_settings
 from .llm import BACKENDS, make_model
 from .roles import assign_roles
 from .transcription import Transcript, transcribe_file
@@ -35,7 +36,9 @@ def _check() -> int:
         try:
             client = baseten_client(settings.baseten_api_key)
             data = client.chat(
-                "check", SPARK_OPEN_BASETEN, [{"role": "user", "content": "Reply with the word: ready"}],
+                "check",
+                SPARK_OPEN_BASETEN,
+                [{"role": "user", "content": "Reply with the word: ready"}],
                 json_output=False,
             )
             answer = (data["choices"][0]["message"].get("content") or "").strip()
@@ -45,6 +48,22 @@ def _check() -> int:
             print(f"Baseten: FAILED - {exc}")
     else:
         print("Baseten: skipped (BASETEN_API_KEY not set)")
+    if settings.fireworks_api_key:
+        try:
+            client = fireworks_client(settings.fireworks_api_key)
+            data = client.chat(
+                "check",
+                SPARK_OPEN_FIREWORKS,
+                [{"role": "user", "content": "Reply with the word: ready"}],
+                json_output=False,
+            )
+            answer = (data["choices"][0]["message"].get("content") or "").strip()
+            print(f"Fireworks ({SPARK_OPEN_FIREWORKS}): OK - {answer[:60]!r}")
+        except ApiError as exc:
+            ok = False
+            print(f"Fireworks: FAILED - {exc}")
+    else:
+        print("Fireworks: skipped (FIREWORKS_API_KEY not set)")
     return 0 if ok else 1
 
 
@@ -61,7 +80,9 @@ def _transcribe(audio_path: Path, out_dir: Path | None, keywords: list[str] | No
         minutes, seconds = divmod(int(turn.start), 60)
         print(f"[{minutes}:{seconds:02d}] {turn.speaker or '?'}: {turn.text}")
     print()
-    print(f"Turns: {len(transcript.turns)} | chunks: {len(transcript.chunks)} | duration: {transcript.duration:.0f} s")
+    print(
+        f"Turns: {len(transcript.turns)} | chunks: {len(transcript.chunks)} | duration: {transcript.duration:.0f} s"
+    )
     print(
         f"Coverage: {cov.fraction:.0%} of detected speech ({cov.covered_speech_seconds:.0f}/{cov.speech_seconds:.0f} s), "
         f"{cov.words} words, {cov.words_per_speech_minute:.0f} words/min"
@@ -103,8 +124,43 @@ def _prepare(session_dir: Path, backend: str) -> int:
     return 0
 
 
+def _fmt_ratio(value: float | None) -> str:
+    return f"{value:.2f}" if value is not None else "n/a"
+
+
+def _code(session_dir: Path, backend: str, effort: str | None, redact_pii: bool) -> int:
+    settings = load_settings()
+    utts = utterances.load(session_dir / "utterances.json")
+    usage = UsageLog(settings.data_dir / "usage.jsonl")
+    codings, _shown, redacted = coding.code_session(
+        utts, make_model(backend, settings, usage, reasoning_effort=effort), redact_pii=redact_pii
+    )
+    coding.save(codings, session_dir / "coding.json")
+    report = metrics.compute(utts, codings)
+    metrics.save(report, session_dir / "metrics.json")
+
+    verified = sum(1 for c in codings if c.verified)
+    print(f"Coding ({backend}): {verified}/{len(codings)} verified, {redacted} identifier(s) redacted")
+    for c in codings:
+        if c.verified:
+            print(f"  {c.utterance} [{c.family}] {c.code} ({c.confidence})")
+        else:
+            print(f"  {c.utterance} [{c.family}] REJECTED: {c.rejection}")
+    print(f"Mode: {report.mode} ({report.clinician_coded} coded clinician utterances)")
+    print(
+        f"Reflections/question: {_fmt_ratio(report.reflections_per_question)} | "
+        f"% complex: {_fmt_ratio(report.pct_complex_reflections)} | "
+        f"% MI-adherent: {_fmt_ratio(report.pct_mi_adherent)}"
+    )
+    print(f"Change-talk ratio: {_fmt_ratio(report.change_talk_ratio)}")
+    print(f"Cost: {usage.cost_summary()} | saved to {session_dir / 'coding.json'}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="oarsight", description="AI supervision for motivational interviewing")
+    parser = argparse.ArgumentParser(
+        prog="oarsight", description="AI supervision for motivational interviewing"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("check", help="verify API keys and connectivity")
     tr = sub.add_parser("transcribe", help="transcribe an audio file with speaker labels")
@@ -113,7 +169,14 @@ def main(argv: list[str] | None = None) -> int:
     tr.add_argument("--keyword", action="append", dest="keywords", help="vocabulary bias term (repeatable)")
     pr = sub.add_parser("prepare", help="assign speaker roles and split into utterances")
     pr.add_argument("session", type=Path, help="session folder containing transcript.json")
-    pr.add_argument("--model", choices=BACKENDS, default="wonder", help="spark-open = private mode on Baseten")
+    pr.add_argument(
+        "--model", choices=BACKENDS, default="wonder", help="spark-open = private mode on Baseten"
+    )
+    co = sub.add_parser("code", help="code utterances with the MITI codebook and compute metrics")
+    co.add_argument("session", type=Path, help="session folder containing utterances.json")
+    co.add_argument("--model", choices=BACKENDS, default="spark", help="spark-open = private mode on Baseten")
+    co.add_argument("--effort", default="low", help="reasoning effort (default: low; ignored by spark-open)")
+    co.add_argument("--no-redact", action="store_true", help="skip PII redaction (not recommended)")
     cb = sub.add_parser("codebook", help="print the coding scheme as Markdown")
     cb.add_argument("--write", type=Path, default=None, help="write to a file instead of printing")
     args = parser.parse_args(argv)
@@ -125,6 +188,8 @@ def main(argv: list[str] | None = None) -> int:
             return _transcribe(args.audio, args.out, args.keywords)
         if args.command == "prepare":
             return _prepare(args.session, args.model)
+        if args.command == "code":
+            return _code(args.session, args.model, args.effort, not args.no_redact)
         if args.command == "codebook":
             text = render_markdown()
             if args.write:

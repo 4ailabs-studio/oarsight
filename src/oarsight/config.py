@@ -10,12 +10,14 @@ from dotenv import load_dotenv
 
 META_BASE_URL = "https://api.meta.ai/v1"
 BASETEN_BASE_URL = "https://inference.baseten.co/v1"
+FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 
 # Model IDs
 WONDER = "muse-wonder-1.0"
 SPARK = "muse-spark-1.3"  # Standard mode only: our content must never be used for training.
 VOICE_TRANSCRIBE = "muse-voice-transcribe-1.0"
 SPARK_OPEN_BASETEN = "meta-models/muse-spark-open-1026"  # the only model the hackathon Baseten key accepts
+SPARK_OPEN_FIREWORKS = "accounts/fireworks/models/muse-spark-open"
 
 
 class MissingKeyError(RuntimeError):
@@ -27,6 +29,7 @@ class Settings:
     meta_api_key: str | None
     baseten_api_key: str | None
     data_dir: Path
+    fireworks_api_key: str | None = None
 
     def require_meta_key(self) -> str:
         if not self.meta_api_key:
@@ -38,6 +41,11 @@ class Settings:
             raise MissingKeyError("BASETEN_API_KEY is not set in .env.")
         return self.baseten_api_key
 
+    def require_fireworks_key(self) -> str:
+        if not self.fireworks_api_key:
+            raise MissingKeyError("FIREWORKS_API_KEY is not set in .env.")
+        return self.fireworks_api_key
+
 
 def load_settings(env_file: Path | None = None) -> Settings:
     """Read keys from the process environment, falling back to a .env file."""
@@ -46,4 +54,5 @@ def load_settings(env_file: Path | None = None) -> Settings:
         meta_api_key=os.environ.get("MODEL_API_KEY") or None,
         baseten_api_key=os.environ.get("BASETEN_API_KEY") or None,
         data_dir=Path(os.environ.get("OARSIGHT_DATA_DIR", "datos")),
+        fireworks_api_key=os.environ.get("FIREWORKS_API_KEY") or None,
     )

@@ -23,7 +23,7 @@ Status: ✅ implemented and tested · 🔜 planned (with the day it lands, see t
 | Only Standard-mode models, whose content is not used for training; Contributor-mode models are refused by code | ✅ `llm.py`, test |
 | Private mode: the analysis can run on Muse Spark Open (open weights) via Baseten | ✅ `llm.py` (roles); 🔜 every stage |
 | Consent screen before recording or uploading | 🔜 Nov 2 (UI) |
-| Minimal redaction of personal identifiers (phone numbers, e-mail addresses, Mexican CURP/NSS, dates of birth) in the transcript before any analysis model sees it. Names spoken in free conversation are hard to detect reliably and are **not** covered; the audio itself is still sent to the speech model | 🔜 Oct 28 |
+| Minimal redaction of personal identifiers (phone numbers, e-mail addresses, Mexican CURP/NSS, dates of birth) in the transcript before any analysis model sees it. Names spoken in free conversation are hard to detect reliably and are **not** covered; the audio itself is still sent to the speech model | ✅ `redact.py`, tests |
 
 ## 3. Transcription fidelity
 In early tests, a language model asked to transcribe invented a sentence the clinician never said, and another service silently dropped most of a consultation.
@@ -41,17 +41,17 @@ In early tests, a language model asked to transcribe invented a sentence the cli
 | Missing clinician or patient, unverified evidence, or low confidence → the clinician must confirm | ✅ |
 | Utterances are exact substrings of their turns, so every quote is traceable | ✅ `utterances.py`, test |
 | Very long unpunctuated utterances are flagged for review | ✅ |
-| The transcript is data, not instructions: it is passed inside delimiters and every prompt says to ignore instructions spoken in the consultation (e.g. "ignore your instructions"); a test checks that such a phrase does not change the output | 🔜 Oct 28 |
+| The transcript is data, not instructions: it is passed inside delimiters and every prompt says to ignore instructions spoken in the consultation (e.g. "ignore your instructions"); a test checks that such a phrase does not change the output | ✅ `coding.py`, test |
 
 ## 5. Coding
 | Guardrail | Status |
 |---|---|
-| Codes come from a closed set ([codebook](CODEBOOK.md)); anything else is rejected | 🔜 Oct 28 |
-| Each code must cite its utterance literally and belong to a speaker with the matching role | 🔜 Oct 28 |
+| Codes come from a closed set ([codebook](CODEBOOK.md)); anything else is rejected | ✅ `coding.py`, tests |
+| Each code must cite its utterance literally and belong to a speaker with the matching role | ✅ `coding.py`, tests |
 | Counter-examples in the codebook against leniency | ✅ `codebook.py` |
 | A skeptic reviewer can only downgrade MI-consistent codes, never upgrade | 🔜 Oct 30 |
-| Metrics are computed in code, never by a model | 🔜 Oct 28 |
-| Short consultations get no global scores, only moments | 🔜 Oct 28 |
+| Metrics are computed in code, never by a model | ✅ `metrics.py`, tests |
+| Short consultations get no global scores, only moments | ✅ `metrics.py` (brief mode under 20 coded clinician utterances) |
 | Accuracy reported honestly against expert annotations, coarse and fine codes separately | 🔜 Oct 29 |
 | Counterfactual pairs: the same consultation changing one thing. Changing who the patient is (name, gender) must not change the feedback; changing a clinician's advice into a reflection must change the metrics | 🔜 Oct 29 |
 | A naive single-prompt baseline is evaluated on the same cases, to show what the guardrails prevent | 🔜 Oct 29 |

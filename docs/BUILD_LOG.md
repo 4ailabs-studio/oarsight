@@ -42,3 +42,14 @@ Later the same day:
 - Real run on the fictional consultation with **both Muse Wonder and Muse Spark Open**: identical roles (both verified by quote) and the same 36 utterances (17 clinician, 19 patient).
 - [`docs/GUARDRAILS.md`](GUARDRAILS.md): catalog of every guardrail (scope, privacy, transcription fidelity, speakers, coding, feedback, agents, simulated patient, cost), each marked as implemented or planned with its day.
 - New guardrail in code: Contributor-mode models are refused before any request is sent, so consultation content can never be used for training. 26 offline tests.
+
+## Day 6 — Sun, Nov 1 → Mon, Nov 2 (catch-up)
+
+Utterance coding and metrics, written from scratch:
+
+- `redact.py`: minimal redaction of personal identifiers (phone, e-mail, CURP, NSS, dates) on the copy an analysis model sees; the transcript is never modified.
+- `coding.py`: clinician coder (5a) and patient coder (5b, with emotions/needs 5c folded into the same call). Each coder gets the session in one batched call with the codebook first (cache-friendly prefix), targets marked and prior turns as context; the transcript travels inside delimiters as data, not instructions. The verifier rejects codes outside the closed set, non-literal quotes, role mismatches, unknown ids and missing utterances; rejected codes stay unverified and never count.
+- `metrics.py`: all metrics computed in code from verified codes only (reflections per question, % complex, % MI-adherent, change-talk ratio). Sessions with fewer than 20 coded clinician utterances are "brief" (no global scores, only moments).
+- `oarsight code` command (default: Spark with low reasoning effort).
+- 36 offline tests (10 new: verifier accept/reject, injection-as-data, metrics math and mode boundary, redaction, both coders with a stubbed model).
+- Real runs on the fictional consultation (36 utterances) with **both Muse Spark ($0.034) and Muse Spark Open on Baseten (private mode)**: 36/36 verified on both, same "brief" mode, same change-talk ratio (0.36), near-identical code counts.

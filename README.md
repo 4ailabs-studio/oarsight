@@ -75,6 +75,8 @@ cp .env.example .env          # then add your MODEL_API_KEY (and BASETEN_API_KEY
 uv sync
 uv run oarsight check         # verify keys and connectivity
 uv run oarsight transcribe consultation.mp3
+uv run oarsight prepare datos/sessions/consultation
+uv run oarsight code datos/sessions/consultation      # MITI coding + metrics (default: Spark)
 uv run pytest                 # tests run offline
 ```
 

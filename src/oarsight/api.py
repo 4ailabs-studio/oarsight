@@ -16,7 +16,7 @@ from typing import Any
 
 import httpx
 
-from .config import BASETEN_BASE_URL, META_BASE_URL, VOICE_TRANSCRIBE
+from .config import BASETEN_BASE_URL, FIREWORKS_BASE_URL, META_BASE_URL, VOICE_TRANSCRIBE
 from .usage import CallRecord, UsageLog, audio_cost, token_cost
 
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
@@ -113,7 +113,8 @@ class ChatClient:
                 seconds=round(time.monotonic() - started, 2),
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
-                reasoning_tokens=(usage.get("completion_tokens_details") or {}).get("reasoning_tokens", 0) or 0,
+                reasoning_tokens=(usage.get("completion_tokens_details") or {}).get("reasoning_tokens", 0)
+                or 0,
                 cached_tokens=cached,
                 cost_usd=token_cost(model, input_tokens, output_tokens, cached),
             )
@@ -195,3 +196,8 @@ class TranscribeClient:
 def baseten_client(api_key: str, usage: UsageLog | None = None) -> ChatClient:
     """Chat client for Muse Spark Open served by Baseten (OpenAI-compatible)."""
     return ChatClient(api_key, base_url=BASETEN_BASE_URL, usage=usage)
+
+
+def fireworks_client(api_key: str, usage: UsageLog | None = None) -> ChatClient:
+    """Chat client for Muse Spark Open served by Fireworks (OpenAI-compatible)."""
+    return ChatClient(api_key, base_url=FIREWORKS_BASE_URL, usage=usage)
