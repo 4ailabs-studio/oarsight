@@ -77,6 +77,9 @@ uv run oarsight check         # verify keys and connectivity
 uv run oarsight transcribe consultation.mp3
 uv run oarsight prepare datos/sessions/consultation
 uv run oarsight code datos/sessions/consultation      # MITI coding + metrics (default: Spark)
+uv run oarsight supervise datos/sessions/consultation # key moments + verified alternatives (Wonder)
+uv run oarsight report datos/sessions/consultation    # expert report: pattern, skill, conclusions
+uv run oarsight serve         # web interface at http://127.0.0.1:8000
 uv run pytest                 # tests run offline
 ```
 

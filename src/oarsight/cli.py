@@ -5,6 +5,9 @@ oarsight transcribe <audio>         # transcribe with speaker labels and check c
 oarsight prepare <session-dir>      # assign speaker roles and split into utterances
 oarsight code <session-dir>         # code utterances and compute metrics
 oarsight codebook                   # print the coding scheme as Markdown
+oarsight supervise <session-dir>    # choose key moments with verified alternatives
+oarsight report <session-dir>       # expert report: pattern, strengths, skill, conclusions
+oarsight serve                      # run the web interface
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import coding, coverage, metrics, utterances
+from . import coding, coverage, metrics, moments, report, supervisor, utterances
 from .api import ApiError, ChatClient, TranscribeClient, baseten_client, fireworks_client
 from .codebook import render_markdown
 from .config import SPARK_OPEN_BASETEN, SPARK_OPEN_FIREWORKS, MissingKeyError, load_settings
@@ -157,6 +160,81 @@ def _code(session_dir: Path, backend: str, effort: str | None, redact_pii: bool)
     return 0
 
 
+def _supervise(session_dir: Path, backend: str, effort: str | None) -> int:
+    settings = load_settings()
+    utts = utterances.load(session_dir / "utterances.json")
+    codings = coding.load(session_dir / "coding.json")
+    usage = UsageLog(settings.data_dir / "usage.jsonl")
+    candidates = moments.build_candidates(utts, codings)
+    moments.save(candidates, session_dir / "candidates.json")
+    results = supervisor.supervise(
+        candidates, utts, codings, make_model(backend, settings, usage, reasoning_effort=effort)
+    )
+    supervisor.save(results, session_dir / "moments.json")
+
+    print(f"Candidates ({backend}): {len(candidates)}")
+    for c in candidates:
+        print(f"  {c.id} score={c.score}: {c.reason}")
+    print(f"Moments: {len(results)}")
+    for m in results:
+        mark = "verified" if m.alternative_verified else f"NOT verified ({m.note})"
+        print(f"  {m.candidate} [{m.type}] {m.why}")
+        print(f"    Podrías decir ({m.alternative_code}, {mark}): {m.alternative}")
+    print(f"Cost: {usage.cost_summary()} | saved to {session_dir / 'moments.json'}")
+    return 0
+
+
+def _report(session_dir: Path, backend: str, effort: str | None) -> int:
+    settings = load_settings()
+    missing = [
+        n
+        for n in ("utterances", "coding", "metrics", "candidates", "moments")
+        if not (session_dir / f"{n}.json").exists()
+    ]
+    if missing:
+        print(f"Missing files: {', '.join(missing)}. Run prepare, code and supervise first.", file=sys.stderr)
+        return 2
+    utts = utterances.load(session_dir / "utterances.json")
+    codings = coding.load(session_dir / "coding.json")
+    report_metrics = metrics.load(session_dir / "metrics.json")
+    candidates = moments.load(session_dir / "candidates.json")
+    session_moments = supervisor.load(session_dir / "moments.json")
+    usage = UsageLog(settings.data_dir / "usage.jsonl")
+    result = report.build_report(
+        utts,
+        codings,
+        report_metrics,
+        candidates,
+        session_moments,
+        make_model(backend, settings, usage, reasoning_effort=effort),
+    )
+    report.save(result, session_dir / "report.json")
+
+    skill = report.SKILLS[result.skill_id]
+    print(f"Pattern ({backend}): {result.pattern}")
+    print(f"Skill to practice: {skill['title']}")
+    print(f"Strengths: {len(result.strengths)} verified ({result.dropped_strengths} dropped)")
+    for s in result.strengths:
+        print(f"  - {s.text} [{s.utterance}: {s.quote[:60]}…]")
+    print("Conclusions:")
+    for c in result.conclusions:
+        print(f"  - {c}")
+    if result.brief_tools:
+        print(f"Brief tools: {len(result.brief_tools)} included")
+    print(f"Cost: {usage.cost_summary()} | saved to {session_dir / 'report.json'}")
+    return 0
+
+
+def _serve(host: str, port: int) -> int:
+    import uvicorn
+
+    from .web import app
+
+    print(f"Oarsight at http://{host}:{port} (Ctrl+C to stop)")
+    uvicorn.run(app, host=host, port=port, log_level="warning")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="oarsight", description="AI supervision for motivational interviewing"
@@ -179,6 +257,17 @@ def main(argv: list[str] | None = None) -> int:
     co.add_argument("--no-redact", action="store_true", help="skip PII redaction (not recommended)")
     cb = sub.add_parser("codebook", help="print the coding scheme as Markdown")
     cb.add_argument("--write", type=Path, default=None, help="write to a file instead of printing")
+    su = sub.add_parser("supervise", help="choose key moments with verified alternatives")
+    su.add_argument("session", type=Path, help="session folder containing utterances.json and coding.json")
+    su.add_argument("--model", choices=BACKENDS, default="wonder")
+    su.add_argument("--effort", default=None, help="reasoning effort (default: model default)")
+    rp = sub.add_parser("report", help="expert report: pattern, strengths, skill, conclusions")
+    rp.add_argument("session", type=Path, help="session folder with utterances/coding/metrics/moments")
+    rp.add_argument("--model", choices=BACKENDS, default="wonder")
+    rp.add_argument("--effort", default=None, help="reasoning effort (default: model default)")
+    sv = sub.add_parser("serve", help="run the web interface")
+    sv.add_argument("--host", default="127.0.0.1")
+    sv.add_argument("--port", type=int, default=8000)
     args = parser.parse_args(argv)
 
     try:
@@ -190,6 +279,12 @@ def main(argv: list[str] | None = None) -> int:
             return _prepare(args.session, args.model)
         if args.command == "code":
             return _code(args.session, args.model, args.effort, not args.no_redact)
+        if args.command == "supervise":
+            return _supervise(args.session, args.model, args.effort)
+        if args.command == "report":
+            return _report(args.session, args.model, args.effort)
+        if args.command == "serve":
+            return _serve(args.host, args.port)
         if args.command == "codebook":
             text = render_markdown()
             if args.write:

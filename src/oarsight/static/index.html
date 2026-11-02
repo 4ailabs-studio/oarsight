@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oarsight — supervisión de entrevista motivacional</title>
+<style>
+  /* IBM Plex Sans (SIL Open Font License, see static/fonts/OFL.txt), self-hosted so the
+     page does not depend on a font CDN. Fallback: system sans. */
+  @font-face {
+    font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap;
+    src: url("/static/fonts/ibm-plex-sans-v23-latin-regular.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap;
+    src: url("/static/fonts/ibm-plex-sans-v23-latin-500.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap;
+    src: url("/static/fonts/ibm-plex-sans-v23-latin-600.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: swap;
+    src: url("/static/fonts/ibm-plex-sans-v23-latin-700.woff2") format("woff2");
+  }
+  :root {
+    --ink: #1b2733;
+    --muted: #5b6b7c;
+    --faint: #8296a8;
+    --line: #d7dee7;
+    --line-soft: #e5ebf1;
+    --bg: #edf1f5;
+    --card: #ffffff;
+    --well: #f3f6f9;
+    --accent: #0e6e6e;
+    --accent-dark: #0a5454;
+    --accent-tint: #e3f0ef;
+    --warn-bg: #fdf3e7; --warn-line: #e3c99b; --warn-ink: #7c4a12;
+    --bad-bg: #fbecea; --bad-line: #e5a9a3; --bad-ink: #7c231c;
+    --ok-bg: #e9f5ee; --ok-line: #a9d3b8; --ok-ink: #14532d;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+    line-height: 1.5;
+    font-size: 15px;
+  }
+
+  /* Barra superior clínica */
+  .topbar { background: var(--accent-dark); color: #dcebe9; font-size: 12.5px; }
+  .topbar-inner {
+    max-width: 1060px; margin: 0 auto; padding: 6px 20px;
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  header.site {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-inner {
+    max-width: 1060px; margin: 0 auto; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .brand-mark {
+    flex: 0 0 auto;
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--accent);
+    color: #fff; font-weight: 700; font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: -0.5px;
+  }
+  header.site h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.2px; }
+  header.site h1 .sub { color: var(--muted); font-weight: 400; font-size: 14px; }
+  header.site .tagline { margin: 3px 0 0; color: var(--muted); font-size: 13px; max-width: 640px; }
+  .site-meta {
+    margin-left: auto; flex: 0 0 auto; text-align: right;
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+  .site-meta strong { color: var(--ink); font-size: 12.5px; }
+
+  main { max-width: 1060px; margin: 0 auto; padding: 20px 20px 64px; }
+
+  /* Tarjetas de sección con paso numerado */
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 13px 18px 11px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--card);
+  }
+  .step {
+    flex: 0 0 auto;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    transform: translateY(3px);
+  }
+  .card-head h2 { margin: 0; font-size: 15.5px; font-weight: 650; }
+  .card-head .hint { margin-left: auto; font-size: 12.5px; color: var(--faint); text-align: right; }
+  .card-body { padding: 14px 18px 16px; }
+  .card-body.flush { padding: 6px 18px 10px; }
+
+  .notice { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .field-label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+  .file-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  input[type=file] { font-size: 14px; max-width: 100%; }
+  .consent {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 14px; margin: 12px 0;
+    background: var(--well);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .consent input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--accent); }
+  .actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 6px;
+    padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--accent-dark); }
+  button:disabled { background: #9aa8b8; cursor: default; }
+  button:focus-visible, a.t:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  #upload-msg { font-size: 13.5px; color: var(--muted); }
+
+  /* Stepper de avance */
+  #stages {
+    display: flex; align-items: center; gap: 0;
+    margin: 4px 0 6px; flex-wrap: wrap; row-gap: 8px;
+    list-style: none; padding: 0;
+  }
+  .stage {
+    font-size: 13px; font-weight: 600;
+    padding: 5px 13px;
+    border-radius: 20px;
+    background: var(--well);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .stage + .stage { margin-left: 6px; }
+  .stage.on { background: var(--accent); border-color: var(--accent-dark); color: #fff; }
+  .stage.bad { background: var(--bad-ink); border-color: var(--bad-ink); color: #fff; }
+
+  /* Avisos */
+  .banner {
+    border-radius: 6px; padding: 10px 14px; font-size: 14px; margin-bottom: 10px;
+    border: 1px solid var(--line);
+  }
+  .banner.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+  .banner.bad { background: var(--bad-bg); border-color: var(--bad-line); color: var(--bad-ink); }
+  .banner.ok { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok-ink); }
+
+  /* Línea de tiempo: dos carriles */
+  .tl-scale {
+    display: flex; justify-content: space-between;
+    margin: 2px 0 2px 96px;
+    font-size: 11.5px; color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+  #timeline { position: relative; }
+  .lane {
+    position: relative; height: 38px; margin: 6px 0 6px 96px;
+    background: var(--well);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+  }
+  .lane-label {
+    position: absolute; left: -96px; width: 88px; text-align: right;
+    font-size: 12.5px; font-weight: 600; color: var(--muted); line-height: 38px;
+    padding-right: 8px;
+  }
+  .blk {
+    position: absolute; top: 6px; height: 24px; border-radius: 4px; cursor: pointer;
+    border: 1px solid rgba(0,0,0,.22); min-width: 6px;
+  }
+  .blk:hover { border-color: var(--ink); }
+  .blk.unver {
+    background: repeating-linear-gradient(45deg, #c9cfd8, #c9cfd8 3px, #e4e8ee 3px, #e4e8ee 6px);
+  }
+  .blk.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+  #legend {
+    display: flex; flex-wrap: wrap; gap: 6px 14px;
+    font-size: 12.5px; color: var(--muted); margin-top: 10px;
+    border-top: 1px solid var(--line-soft); padding-top: 10px;
+  }
+  .chip {
+    display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px;
+    vertical-align: baseline; border: 1px solid rgba(0,0,0,.22);
+  }
+
+  /* Momentos clave: filas separadas por regla, sin tarjetas anidadas */
+  .mom { border-top: 1px solid var(--line-soft); padding: 12px 2px; font-size: 14px; }
+  .mom:first-child { border-top: 0; padding-top: 4px; }
+  .mom .top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .mom .who { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .mom .why { font-size: 13.5px; color: var(--muted); margin: 6px 0; }
+  .mom .quote { margin: 3px 0; }
+  .mom .alt {
+    background: var(--accent-tint);
+    border-top: 2px solid var(--accent);
+    padding: 8px 12px; margin-top: 8px;
+    font-size: 14px;
+  }
+  .mom .alt.unver { background: var(--well); border-top-color: #9aa8b8; }
+  .tag {
+    font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 8px; margin-left: 6px;
+    color: #fff; white-space: nowrap; letter-spacing: .1px;
+  }
+  .tag.type-acierto { background: #0e7c86; }
+  .tag.type-oportunidad { background: #a87f14; }
+  .tag.ok { background: #227a45; }
+  .tag.no { background: #8494a7; }
+  .mom-title { font-weight: 700; font-size: 14px; }
+  .mom-acierto .mom-title { color: var(--accent-dark); }
+  .mom-oportunidad .mom-title { color: var(--warn-ink); }
+  .mstep { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 8px 0 2px; }
+  .mom .skill { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .mom .vernote { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .mom-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  button.ghost {
+    background: var(--card); color: var(--accent-dark);
+    border: 1px solid var(--accent); padding: 7px 14px;
+  }
+  button.ghost:hover:not(:disabled) { background: var(--accent-tint); }
+  #moments-intro { margin: 8px 2px 4px; }
+  .mom a.t, .utt a.t {
+    color: var(--accent); text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer; font-size: 12.5px; font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+
+  /* Métricas estilo resultados de laboratorio */
+  #metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; }
+  .m { background: var(--card); padding: 12px 14px; }
+  .m .k { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .m .v { font-size: 21px; font-weight: 700; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; }
+
+  /* Enunciados: tabla de historia clínica */
+  .utt { border-top: 1px solid var(--line-soft); padding: 9px 2px; font-size: 14px; }
+  .utt:first-child { border-top: 0; }
+  .utt .meta { font-size: 12.5px; color: var(--muted); margin-bottom: 2px; }
+  .utt .code {
+    font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 8px; margin-left: 6px;
+    color: #fff; white-space: nowrap;
+  }
+  .utt .code.unver { background: #8494a7; }
+  .utt.sel { background: #fdf6e3; }
+  .utt .role-c { font-weight: 700; color: var(--accent-dark); }
+  .utt .role-p { font-weight: 700; color: #4a5a6c; }
+
+  audio { width: 100%; margin-top: 10px; }
+  .player-row { display: flex; align-items: center; gap: 10px; }
+  .player-row .cap { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .hidden { display: none; }
+
+  footer.page {
+    max-width: 1060px; margin: 0 auto; padding: 0 20px 40px;
+    font-size: 12.5px; color: var(--muted);
+  }
+
+  @media (max-width: 720px) {
+    .site-inner { flex-wrap: wrap; }
+    .site-meta { margin-left: 0; text-align: left; }
+    .card-head .hint { display: none; }
+    .lane { margin-left: 78px; }
+    .lane-label { left: -78px; width: 70px; }
+    .tl-scale { margin-left: 78px; }
+    #metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+  /* Señales de proceso */
+  #livebar { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px;
+    font-size: 13.5px; }
+  #livedot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  #livedot.idle { animation: none; background: var(--ok-ink); }
+  #livedot.stopped { animation: none; background: var(--bad-ink); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  #elapsed { margin-left: auto; color: var(--faint); font-size: 12.5px; white-space: nowrap; }
+  #bar { height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; }
+  #barfill { height: 100%; width: 0; border-radius: 3px; background: var(--accent);
+    transition: width 0.6s ease; }
+  #bar.running #barfill {
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.25) 0 8px, transparent 8px 16px);
+    background-size: 22px 100%;
+    animation: stripes 1s linear infinite;
+  }
+  @keyframes stripes { to { background-position: 22px 0; } }
+  #log { list-style: none; margin: 10px 0 0; padding: 8px 12px; background: var(--well);
+    border: 1px solid var(--line-soft); border-radius: 6px; font-size: 12.5px; color: var(--muted);
+    max-height: 132px; overflow-y: auto; }
+  #log li { padding: 1px 0; }
+  #log time { color: var(--faint); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  #stages .stage.done::before { content: "✓ "; }
+  #stages .stage.now { animation: pulse 1.2s ease-in-out infinite; }
+
+  /* Navegador de vistas */
+  #results-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 14px; position: sticky; top: 0; z-index: 5; }
+  .vnav { background: var(--well); color: var(--muted); border: 1px solid var(--line);
+    border-radius: 16px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+  .vnav.active { background: var(--accent); border-color: var(--accent-dark); color: #fff; }
+  .vnav.hidden { display: none; }
+  #vcounter { margin-left: auto; font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+  .vstep { background: var(--well); border: 1px solid var(--line); border-radius: 6px;
+    padding: 5px 10px; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .vhide { display: none; }
+
+  /* Informe del supervisor */
+  #skillbox { background: var(--accent-tint); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  #skillbox .k { font-size: 12px; font-weight: 700; color: var(--accent-dark);
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  #skillbox .t { font-size: 16px; font-weight: 700; margin: 2px 0; }
+  #skillbox .g { font-size: 13.5px; color: var(--ink); }
+  #pattern { font-size: 14.5px; margin: 0 0 6px; }
+  .rep-h { font-size: 13px; font-weight: 700; color: var(--muted); margin: 12px 0 6px; }
+  .str { border-top: 1px solid var(--line-soft); padding: 7px 0; font-size: 14px; }
+  .str:first-child { border-top: 0; }
+  .str blockquote { margin: 4px 0 0; padding-left: 10px; color: var(--muted);
+    border-left: 2px solid var(--accent); font-size: 13px; }
+  .str a { color: var(--accent); text-decoration: none; cursor: pointer; font-size: 12px; }
+  #conclusions { margin: 0; padding-left: 20px; font-size: 14px; }
+  #conclusions li { margin-bottom: 4px; }
+  .tool { border-top: 1px solid var(--line-soft); padding: 7px 0; font-size: 13.5px; }
+  .tool:first-child { border-top: 0; }
+  .tool b { display: block; }
+
+  /* Grabar o subir */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { background: var(--well); color: var(--muted); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 16px; font-size: 13.5px; cursor: pointer; }
+  .tab.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  #rec-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  #rec-btn { min-width: 150px; }
+  #rec-btn.recording { background: var(--bad-ink); animation: pulse 1.2s ease-in-out infinite; }
+  #rec-time { font-size: 15px; font-variant-numeric: tabular-nums; min-width: 44px; }
+  #meter { flex: 1 1 120px; height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; }
+  #meterfill { height: 100%; width: 0; background: var(--accent); border-radius: 4px; }
+  #rec-info { font-size: 13px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <span>Entorno de formación clínica — datos ficticios</span>
+    <span>No diagnostica ni da consejo médico</span>
+  </div>
+</div>
+<header class="site">
+  <div class="site-inner">
+    <div class="brand-mark" aria-hidden="true">Oa</div>
+    <div>
+      <h1>Oarsight <span class="sub">· supervisión de entrevista motivacional</span></h1>
+      <p class="tagline">Herramienta de entrenamiento en comunicación para clínicos. No diagnostica ni da consejo médico. Solo consultas ficticias o actuadas.</p>
+    </div>
+    <div class="site-meta">
+      <strong>Registro de sesión</strong><br>
+      Audio · transcripción · códigos MITI
+    </div>
+  </div>
+</header>
+<main>
+  <section class="card" id="upload-sec">
+    <div class="card-head">
+      <span class="step" aria-hidden="true">1</span>
+      <h2>Subir consulta</h2>
+      <span class="hint">MP3 · M4A · WAV · OGG · WebM — máx. 100&nbsp;MB</span>
+    </div>
+    <div class="card-body">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tab-upload" type="button">Subir archivo</button>
+        <button class="tab" id="tab-record" type="button">Grabar en vivo</button>
+      </div>
+      <div id="panel-upload">
+        <label class="field-label" for="audio">Archivo de audio</label>
+        <div class="file-row">
+          <input type="file" id="audio" accept="audio/*,.mp3,.m4a,.wav,.ogg,.webm">
+        </div>
+      </div>
+      <div id="panel-record" class="hidden">
+        <span class="field-label">Micrófono</span>
+        <div id="rec-row">
+          <button id="rec-btn" type="button">● Empezar a grabar</button>
+          <span id="rec-time">0:00</span>
+          <div id="meter" aria-hidden="true"><div id="meterfill"></div></div>
+        </div>
+        <p class="notice" id="rec-info">La grabación se procesa igual que un archivo subido.</p>
+      </div>
+      <label class="consent"><input type="checkbox" id="consent">
+        <span>Confirmo que es una consulta <b>ficticia o actuada</b>, o que tengo el consentimiento del paciente para analizarla.</span>
+      </label>
+      <div class="actions">
+        <button id="send" disabled>Analizar</button>
+        <span class="notice" id="upload-msg" role="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="progress-sec">
+    <div class="card-head">
+      <span class="step" aria-hidden="true">2</span>
+      <h2>Análisis</h2>
+      <span class="hint">El audio se conserva para revisión</span>
+    </div>
+    <div class="card-body">
+      <div id="stages">
+        <span class="stage" data-s="transcribing">Transcribiendo</span>
+        <span class="stage" data-s="preparing">Hablantes</span>
+        <span class="stage" data-s="coding">Codificando</span>
+        <span class="stage" data-s="supervising">Momentos</span>
+        <span class="stage" data-s="reporting">Informe</span>
+        <span class="stage" data-s="done">Listo</span>
+      </div>
+      <div id="livebar">
+        <span id="livedot" aria-hidden="true"></span>
+        <span id="detail">En cola…</span>
+        <span id="elapsed"></span>
+      </div>
+      <div id="bar" class="running"><div id="barfill"></div></div>
+      <ol id="log" aria-live="polite"></ol>
+      <p class="notice" id="cost"></p>
+      <div class="player-row">
+        <audio id="player" controls preload="metadata" class="hidden"></audio>
+      </div>
+    </div>
+  </section>
+
+  <nav id="results-nav" class="hidden" aria-label="Vistas de resultados">
+    <button class="vstep" id="vprev" type="button" title="Vista anterior">←</button>
+    <button class="vnav" data-v="report" type="button">Informe</button>
+    <button class="vnav" data-v="moments" type="button">Momentos</button>
+    <button class="vnav" data-v="timeline" type="button">Línea de tiempo</button>
+    <button class="vnav" data-v="metrics" type="button">Métricas</button>
+    <button class="vnav" data-v="utterances" type="button">Enunciados</button>
+    <button class="vstep" id="vnext" type="button" title="Vista siguiente">→</button>
+    <span id="vcounter"></span>
+  </nav>
+
+  <section class="card hidden" id="report-sec">
+    <div class="card-head">
+      <h2>Informe del supervisor</h2>
+      <span class="hint">Patrón · fortalezas · una habilidad · conclusiones</span>
+    </div>
+    <div class="card-body">
+      <div id="skillbox"></div>
+      <p id="pattern"></p>
+      <h3 class="rep-h">Fortalezas</h3>
+      <div id="strengths"></div>
+      <h3 class="rep-h">Conclusiones</h3>
+      <ol id="conclusions"></ol>
+      <div id="brieftools" class="hidden">
+        <h3 class="rep-h">Para tu consulta breve</h3>
+        <div id="tools"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="result-sec">
+    <div class="card-head">
+      <h2>Línea de tiempo</h2>
+      <span class="hint">Pulse un bloque para localizar el enunciado</span>
+    </div>
+    <div class="card-body">
+      <div id="banners"></div>
+      <div class="tl-scale" aria-hidden="true"><span>Inicio</span><span>Mitad</span><span>Fin</span></div>
+      <div id="timeline"></div>
+      <div id="legend"></div>
+    </div>
+  </section>
+
+<!-- Estrategia de momentos (MI + ORQUESTACION-EM 6 ter/14):
+1. Aciertos primero ("esto te salió bien"), luego oportunidades ("para practicar"); nunca "fallo".
+2. Cada momento: qué pasó (paciente → tu respuesta + código) → por qué importa → podrías decir.
+3. La alternativa nombra UNA habilidad, dice por qué funciona y muestra si está verificada o no.
+4. Cada momento enlaza a su audio (escuchar fragmento) y a su enunciado (ver en transcripción).
+5. Segunda persona, tono respetuoso; la incertidumbre siempre visible. -->
+  <section class="card hidden" id="moments-sec">
+    <div class="card-head">
+      <h2>Momentos clave</h2>
+      <span class="hint">Aciertos y oportunidades con alternativa sugerida</span>
+    </div>
+    <div class="card-body flush">
+      <p class="notice" id="moments-intro">Primero lo que te salió bien; cada momento enlaza a su fragmento de audio.</p>
+      <div id="moments"></div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="metrics-sec">
+    <div class="card-head">
+      <h2>Métricas</h2>
+      <span class="hint">Valores observados en la sesión</span>
+    </div>
+    <div class="card-body">
+      <div id="metrics"></div>
+      <p class="notice">Umbrales MITI por confirmar contra el manual; por ahora se muestran solo los valores.</p>
+    </div>
+  </section>
+
+  <section class="card hidden" id="list-sec">
+    <div class="card-head">
+      <h2>Enunciados</h2>
+      <span class="hint">Pulse la hora para escuchar el fragmento</span>
+    </div>
+    <div class="card-body flush">
+      <div id="list"></div>
+    </div>
+  </section>
+</main>
+<footer class="page">
+  Oarsight es una herramienta de formación. Trabaje siempre con material ficticio o actuado y no la use para diagnóstico ni consejo médico.
+</footer>
+<script>
+"use strict";
+const COLORS = {
+  QUESTION: "#2b6cb0", SIMPLE_REFLECTION: "#4d9b6a", COMPLEX_REFLECTION: "#1f7a4d",
+  AFFIRM: "#b98a1d", SEEK_COLLABORATION: "#0e7c86", EMPHASIZE_AUTONOMY: "#5f7a61",
+  GIVE_INFORMATION: "#718096", PERSUADE: "#dd6b20", PERSUADE_WITH_PERMISSION: "#eda06a",
+  CONFRONT: "#b3362b", NO_CODE: "#c3c9d4",
+  CHANGE: "#227a45", SUSTAIN: "#c0563f", NEUTRAL: "#c3c9d4",
+};
+const NAMES = {
+  QUESTION: "Pregunta", SIMPLE_REFLECTION: "Reflejo simple", COMPLEX_REFLECTION: "Reflejo complejo",
+  AFFIRM: "Afirmación", SEEK_COLLABORATION: "Colaboración", EMPHASIZE_AUTONOMY: "Autonomía",
+  GIVE_INFORMATION: "Información", PERSUADE: "Persuasión", PERSUADE_WITH_PERMISSION: "Persuasión con permiso",
+  CONFRONT: "Confrontación", NO_CODE: "Sin código",
+  CHANGE: "Cambio", SUSTAIN: "Mantenimiento", NEUTRAL: "Neutral",
+};
+const $ = (id) => document.getElementById(id);
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+let pollTimer = null, sessionId = null, duration = 0;
+let tickTimer = null, runStarted = 0, lastStage = "", lastDetail = "";
+const STAGE_LABEL = {
+  transcribing: "Transcribiendo audio", preparing: "Identificando hablantes",
+  coding: "Codificando enunciados", supervising: "Eligiendo momentos clave",
+  reporting: "Redactando informe", done: "Análisis completo",
+};
+
+function stamp() {
+  const d = new Date();
+  return [d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, "0")).join(":");
+}
+
+function log(text) {
+  const li = document.createElement("li");
+  const t = document.createElement("time");
+  t.textContent = stamp();
+  li.appendChild(t);
+  li.appendChild(document.createTextNode(text));
+  const box = $("log");
+  box.appendChild(li);
+  box.scrollTop = box.scrollHeight;
+}
+
+function tick() {
+  $("elapsed").textContent = mmss((Date.now() - runStarted) / 1000) + " transcurridos";
+}
+
+let mode = "upload", recordedFile = null, recState = null;
+
+function refreshSend() {
+  const ready = mode === "upload" ? $("audio").files.length > 0 : recordedFile !== null;
+  $("send").disabled = !($("consent").checked && ready);
+}
+
+function setMode(next) {
+  mode = next;
+  $("tab-upload").classList.toggle("active", next === "upload");
+  $("tab-record").classList.toggle("active", next === "record");
+  $("panel-upload").classList.toggle("hidden", next !== "upload");
+  $("panel-record").classList.toggle("hidden", next !== "record");
+  $("send").textContent = next === "upload" ? "Analizar" : "Analizar grabación";
+  refreshSend();
+}
+
+$("tab-upload").addEventListener("click", () => setMode("upload"));
+$("tab-record").addEventListener("click", () => setMode("record"));
+$("consent").addEventListener("change", refreshSend);
+$("audio").addEventListener("change", refreshSend);
+
+function pickMime() {
+  for (const m of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return "";
+}
+
+function meterLoop() {
+  if (!recState) return;
+  const buf = new Uint8Array(recState.analyser.frequencyBinCount);
+  recState.analyser.getByteTimeDomainData(buf);
+  let peak = 0;
+  for (const v of buf) peak = Math.max(peak, Math.abs(v - 128) / 128);
+  $("meterfill").style.width = Math.round(Math.min(peak * 1.6, 1) * 100) + "%";
+  $("rec-time").textContent = mmss((Date.now() - recState.t0) / 1000);
+  recState.raf = requestAnimationFrame(meterLoop);
+}
+
+$("rec-btn").addEventListener("click", async () => {
+  if (recState) { // stop
+    recState.rec.stop();
+    return;
+  }
+  const mime = pickMime();
+  if (!mime) {
+    $("rec-info").textContent = "Este navegador no puede grabar audio. Sube un archivo.";
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream, { mimeType: mime });
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      cancelAnimationFrame(recState.raf);
+      stream.getTracks().forEach((t) => t.stop());
+      recState.ctx.close();
+      const secs = Math.round((Date.now() - recState.t0) / 1000);
+      const ext = mime.includes("mp4") ? ".mp4" : ".webm";
+      recordedFile = new File(chunks, "grabacion" + ext, { type: mime.split(";")[0] });
+      recState = null;
+      $("rec-btn").classList.remove("recording");
+      $("rec-btn").textContent = "● Grabar de nuevo";
+      $("meterfill").style.width = "0";
+      $("rec-info").textContent =
+        `Grabación lista: ${mmss(secs)} (${Math.round(recordedFile.size / 1024)} KB). Pulsa "Analizar grabación".`;
+      refreshSend();
+    };
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    recState = { rec, stream, ctx, analyser, raf: 0, t0: Date.now() };
+    rec.start();
+    recordedFile = null;
+    $("rec-btn").classList.add("recording");
+    $("rec-btn").textContent = "■ Detener";
+    $("rec-info").textContent = "Grabando… habla con normalidad.";
+    meterLoop();
+    refreshSend();
+  } catch (e) {
+    $("rec-info").textContent = "No se pudo usar el micrófono: " + e.message;
+  }
+});
+
+$("send").addEventListener("click", async () => {
+  const file = mode === "upload" ? $("audio").files[0] : recordedFile;
+  if (!file) return;
+  $("send").disabled = true;
+  $("rec-btn").disabled = true;
+  $("upload-msg").textContent = "Subiendo…";
+  const form = new FormData();
+  form.append("audio", file);
+  try {
+    const r = await fetch("/api/sessions", { method: "POST", body: form });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    sessionId = (await r.json()).id;
+    $("upload-msg").textContent = "";
+    $("progress-sec").classList.remove("hidden");
+    $("log").innerHTML = "";
+    $("livedot").className = "";
+    $("bar").classList.add("running");
+    runStarted = Date.now();
+    lastStage = "";
+    lastDetail = "";
+    clearInterval(tickTimer);
+    tickTimer = setInterval(tick, 500);
+    tick();
+    log("Audio recibido, análisis en cola.");
+    poll();
+  } catch (e) {
+    $("upload-msg").textContent = "Error: " + e.message;
+    $("send").disabled = false;
+    $("rec-btn").disabled = false;
+  }
+});
+
+async function poll() {
+  clearTimeout(pollTimer);
+  const r = await fetch(`/api/sessions/${sessionId}`);
+  const s = await r.json();
+  const ORDER = ["transcribing", "preparing", "coding", "supervising", "reporting", "done"];
+  const at = ORDER.indexOf(s.stage);
+  document.querySelectorAll("#stages .stage").forEach((el) => {
+    const i = ORDER.indexOf(el.dataset.s);
+    el.classList.toggle("on", i <= at && at >= 0);
+    el.classList.toggle("done", i < at);
+    el.classList.toggle("now", i === at && (s.status === "running" || s.status === "queued"));
+  });
+  $("barfill").style.width = (at < 0 ? 0 : Math.round(((at + 1) / ORDER.length) * 100)) + "%";
+  if (s.detail && s.detail !== lastDetail) {
+    lastDetail = s.detail;
+    $("detail").textContent = s.detail;
+    log(s.detail);
+  }
+  if (s.stage && s.stage !== lastStage && STAGE_LABEL[s.stage]) {
+    lastStage = s.stage;
+    if (s.stage !== "done") log("→ " + STAGE_LABEL[s.stage] + ".");
+  }
+  if (s.cost) $("cost").textContent = "Costo estimado: " + s.cost;
+  if (s.status === "running" || s.status === "queued") {
+    pollTimer = setTimeout(poll, 2000);
+  } else if (s.status === "done") {
+    finishLive(false);
+    showResults(s);
+  } else {
+    finishLive(true);
+    document.querySelectorAll("#stages .stage").forEach((el) => el.classList.remove("on", "now"));
+    const b = document.createElement("div");
+    b.className = "banner bad";
+    b.textContent = s.error || "La sesión no se pudo analizar.";
+    $("progress-sec").appendChild(b);
+    if (s.transcript) showResults(s); // incomplete: show transcript + coverage anyway
+  }
+}
+
+function finishLive(failed) {
+  clearInterval(tickTimer);
+  clearTimeout(pollTimer);
+  $("bar").classList.remove("running");
+  $("livedot").className = failed ? "stopped" : "idle";
+  $("elapsed").textContent = "terminado en " + mmss((Date.now() - runStarted) / 1000);
+  if (!failed) log("Análisis completo.");
+}
+
+const VIEWS = [
+  ["report", "report-sec"], ["moments", "moments-sec"], ["timeline", "result-sec"],
+  ["metrics", "metrics-sec"], ["utterances", "list-sec"],
+];
+let currentView = "report";
+
+function visibleViews() {
+  return VIEWS.filter(([, sec]) => !$(sec).classList.contains("hidden"));
+}
+
+function syncNav() {
+  document.querySelectorAll(".vnav").forEach((b) => {
+    const found = VIEWS.find(([w]) => w === b.dataset.v);
+    b.classList.toggle("hidden", found ? $(found[1]).classList.contains("hidden") : true);
+  });
+}
+
+function showView(v) {
+  const vis = visibleViews();
+  if (!vis.length) return;
+  if (!vis.some(([w]) => w === v)) v = vis[0][0];
+  currentView = v;
+  for (const [w, sec] of VIEWS) $(sec).classList.toggle("vhide", w !== v);
+  document.querySelectorAll(".vnav").forEach((b) => b.classList.toggle("active", b.dataset.v === v));
+  const i = vis.findIndex(([w]) => w === v);
+  $("vcounter").textContent = `Vista ${i + 1} de ${vis.length}`;
+  history.replaceState(null, "", "#" + v);
+}
+
+function stepView(d) {
+  const vis = visibleViews();
+  if (!vis.length) return;
+  const i = vis.findIndex(([w]) => w === currentView);
+  showView(vis[(i + d + vis.length) % vis.length][0]);
+}
+
+document.querySelectorAll(".vnav").forEach((b) => b.addEventListener("click", () => showView(b.dataset.v)));
+$("vprev").addEventListener("click", () => stepView(-1));
+$("vnext").addEventListener("click", () => stepView(1));
+
+function showResults(s) {
+  document.querySelectorAll(".vnav").forEach((b) => b.classList.remove("active"));
+  if (s.report) {
+    $("report-sec").classList.remove("hidden");
+    const rep = s.report;
+    $("skillbox").innerHTML = "";
+    if (rep.skill) {
+      const k = document.createElement("div");
+      k.className = "k";
+      k.textContent = "Tu habilidad para la próxima consulta";
+      const t = document.createElement("div");
+      t.className = "t";
+      t.textContent = rep.skill.title;
+      const g = document.createElement("div");
+      g.className = "g";
+      g.textContent = rep.skill.guide;
+      $("skillbox").append(k, t, g);
+    }
+    $("pattern").textContent = rep.pattern || "";
+    const st = $("strengths");
+    st.innerHTML = "";
+    for (const x of rep.strengths || []) {
+      const d = document.createElement("div");
+      d.className = "str";
+      const p = document.createElement("div");
+      p.textContent = x.text;
+      const q = document.createElement("blockquote");
+      q.textContent = "«" + x.quote + "»";
+      const a = document.createElement("a");
+      a.textContent = "Ver " + x.utterance + " en la transcripción";
+      a.addEventListener("click", () => select(x.utterance, false));
+      d.append(p, q, a);
+      st.appendChild(d);
+    }
+    const co = $("conclusions");
+    co.innerHTML = "";
+    for (const c of rep.conclusions || []) {
+      const li = document.createElement("li");
+      li.textContent = c;
+      co.appendChild(li);
+    }
+    if (rep.brief_tools && rep.brief_tools.length) {
+      $("brieftools").classList.remove("hidden");
+      const tools = $("tools");
+      tools.innerHTML = "";
+      for (const x of rep.brief_tools) {
+        const d = document.createElement("div");
+        d.className = "tool";
+        const b = document.createElement("b");
+        b.textContent = x.title;
+        const g = document.createElement("span");
+        g.textContent = x.guide;
+        d.append(b, g);
+        tools.appendChild(d);
+      }
+    }
+  }
+  $("result-sec").classList.remove("hidden");
+  const player = $("player");
+  player.src = `/api/sessions/${sessionId}/audio`;
+  player.classList.remove("hidden");
+  duration = (s.transcript && s.transcript.duration) || 1;
+  // banners
+  const banners = $("banners");
+  banners.innerHTML = "";
+  const addBanner = (cls, text) => {
+    const d = document.createElement("div");
+    d.className = "banner " + cls;
+    d.textContent = text;
+    banners.appendChild(d);
+  };
+  if (s.coverage) {
+    const c = s.coverage;
+    addBanner(c.complete ? "ok" : "bad",
+      c.complete
+        ? `Audio completo: ${Math.round(c.fraction * 100)} % del habla transcrita (${c.words} palabras).`
+        : `Transcripción incompleta (${Math.round(c.fraction * 100)} %): esta sesión no se analiza.`);
+  }
+  if (s.roles && s.roles.needs_confirmation && s.roles.needs_confirmation.length) {
+    addBanner("warn", "Hablantes por confirmar: " + s.roles.needs_confirmation.join(" · "));
+  }
+  if (!s.utterances) return;
+  const byId = Object.fromEntries((s.coding || []).map((c) => [c.utterance, c]));
+  // timeline lanes
+  const tl = $("timeline");
+  tl.innerHTML = "";
+  for (const [role, label] of [["clinician", "Clínico"], ["patient", "Paciente"]]) {
+    const lane = document.createElement("div");
+    lane.className = "lane";
+    lane.innerHTML = `<span class="lane-label">${label}</span>`;
+    for (const u of s.utterances.filter((x) => x.role === role)) {
+      const c = byId[u.id];
+      const b = document.createElement("span");
+      b.className = "blk" + (c && c.verified ? "" : " unver");
+      b.style.left = `${(100 * u.start / duration).toFixed(2)}%`;
+      b.style.width = `${Math.max(100 * (u.end - u.start) / duration, 0.8).toFixed(2)}%`;
+      if (c && c.verified) b.style.background = COLORS[c.code] || "#999";
+      b.title = `${u.id} ${mmss(u.start)} — ${(c && c.code) || "sin verificar"}`;
+      b.addEventListener("click", () => select(u.id, true));
+      b.id = "blk-" + u.id;
+      lane.appendChild(b);
+    }
+    tl.appendChild(lane);
+  }
+  // legend
+  const seen = [...new Set((s.coding || []).filter((c) => c.verified).map((c) => c.code))];
+  $("legend").innerHTML = seen.map((c) =>
+    `<span><span class="chip" style="background:${COLORS[c]}"></span>${NAMES[c] || c}</span>`).join("");
+  // moments: aciertos primero, luego oportunidades; cada uno enlaza a su audio
+  if (s.moments && s.moments.length && s.candidates) {
+    $("moments-sec").classList.remove("hidden");
+    const umap = Object.fromEntries(s.utterances.map((u) => [u.id, u]));
+    const cmap = Object.fromEntries(s.candidates.map((c) => [c.id, c]));
+    const ordered = [...s.moments].sort((a, b) =>
+      Number(a.type === "oportunidad") - Number(b.type === "oportunidad"));
+    const nOk = ordered.filter((m) => m.type === "acierto").length;
+    const nOp = ordered.length - nOk;
+    $("moments-intro").textContent =
+      `Tienes ${nOk} acierto${nOk === 1 ? "" : "s"} y ${nOp} oportunidad${nOp === 1 ? "" : "es"}` +
+      ` para practicar. Primero lo que te salió bien; cada momento enlaza a su fragmento de audio.`;
+    const box = $("moments");
+    box.innerHTML = "";
+    ordered.forEach((m, i) => {
+      const cand = cmap[m.candidate];
+      if (!cand) return;
+      const pu = umap[cand.patient], cu = umap[cand.clinician];
+      if (!pu || !cu) return;
+      const cc = byId[cu.id];
+      const skill = (NAMES[m.alternative_code] || m.alternative_code || "").toLowerCase();
+      const isOk = m.type === "acierto";
+      const d = document.createElement("div");
+      d.className = "mom " + (isOk ? "mom-acierto" : "mom-oportunidad");
+      const typeTag = `<span class="tag type-${m.type}">${m.type}</span>`;
+      const verTag = m.alternative_verified
+        ? `<span class="tag ok">verificada</span>`
+        : `<span class="tag no">sin verificar</span>`;
+      d.innerHTML =
+        `<div class="mom-title"><span class="mt"></span>${typeTag}${verTag}</div>` +
+        `<div class="mstep">Qué pasó</div>` +
+        `<div class="quote"><span class="who">La persona te dijo: </span><span class="pq"></span></div>` +
+        `<div class="quote"><span class="who">Tú dijiste</span><span class="ccode"></span><span>: </span>` +
+        `<span class="cq"></span></div>` +
+        `<div class="mstep">Por qué importa</div>` +
+        `<div class="why"></div>` +
+        `<div class="alt${m.alternative_verified ? "" : " unver"}">` +
+        `<div class="mstep">Podrías decir</div>` +
+        `<div class="aq"></div><div class="skill"></div><div class="vernote"></div></div>` +
+        `<div class="mom-actions"><button type="button" class="ghost seek"></button>` +
+        `<button type="button" class="ghost goto">Ver en la transcripción</button></div>`;
+      d.querySelector(".mt").textContent =
+        `Momento ${i + 1} de ${ordered.length} · ` +
+        (isOk ? "Acierto — esto te salió bien" : "Oportunidad — para practicar");
+      d.querySelector(".pq").textContent = "«" + pu.text + "»";
+      d.querySelector(".cq").textContent = "«" + cu.text + "»";
+      if (cc && cc.verified) d.querySelector(".ccode").textContent = ` (${NAMES[cc.code] || cc.code})`;
+      d.querySelector(".why").textContent = m.why;
+      d.querySelector(".aq").textContent = "«" + m.alternative + "»";
+      if (skill) {
+        d.querySelector(".skill").textContent = `Habilidad que entrenas: ${skill}. Practícala en tu próxima consulta.`;
+        d.querySelector(".vernote").textContent = m.alternative_verified
+          ? `Verificada: tu propio codificador confirmó que esta frase muestra ${skill}.`
+          : "Sin verificar: no pasó la comprobación automática; úsala con cautela.";
+      } else {
+        d.querySelector(".vernote").textContent = m.alternative_verified
+          ? "Verificada con tu propio codificador."
+          : "Sin verificar: no pasó la comprobación automática; úsala con cautela.";
+      }
+      d.querySelector(".seek").textContent = `Escuchar fragmento (${mmss(pu.start)})`;
+      d.querySelector(".seek").addEventListener("click", () => {
+        player.currentTime = pu.start; player.play();
+      });
+      d.querySelector(".goto").addEventListener("click", () => select(cu.id, false));
+      box.appendChild(d);
+    });
+  }
+  // metrics
+  if (s.metrics) {
+    $("metrics-sec").classList.remove("hidden");
+    const m = s.metrics;
+    const fmt = (v) => (v === null || v === undefined ? "n/a" : Number(v).toFixed(2));
+    $("metrics").innerHTML = [
+      ["Modo", m.mode === "brief" ? "Consulta breve" : "Sesión"],
+      ["Reflexiones / pregunta", fmt(m.reflections_per_question)],
+      ["% reflejos complejos", fmt(m.pct_complex_reflections)],
+      ["% coherente con EM", fmt(m.pct_mi_adherent)],
+      ["Lenguaje de cambio", fmt(m.change_talk_ratio)],
+      ["Enunciados verificados", `${m.clinician_coded + m.patient_coded}`],
+    ].map(([k, v]) => `<div class="m"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+  }
+  // utterance list
+  $("list-sec").classList.remove("hidden");
+  const list = $("list");
+  list.innerHTML = "";
+  for (const u of s.utterances) {
+    const c = byId[u.id];
+    const d = document.createElement("div");
+    d.className = "utt";
+    d.id = "utt-" + u.id;
+    const codeHtml = c && c.verified
+      ? `<span class="code" style="background:${COLORS[c.code]}">${NAMES[c.code] || c.code}</span>`
+      : `<span class="code unver">sin verificar</span>`;
+    d.innerHTML = `<div class="meta"><a class="t" data-t="${u.start}">${mmss(u.start)}</a> · ${u.id} · ` +
+      `${u.role === "clinician" ? "Clínico" : u.role === "patient" ? "Paciente" : u.role}${codeHtml}</div>` +
+      `<div></div>`;
+    d.lastChild.textContent = u.text;
+    list.appendChild(d);
+  }
+  list.querySelectorAll("a.t").forEach((a) =>
+    a.addEventListener("click", () => { player.currentTime = Number(a.dataset.t); player.play(); }));
+  $("results-nav").classList.remove("hidden");
+  syncNav();
+  const initial = location.hash.replace("#", "");
+  showView(VIEWS.some(([w]) => w === initial) ? initial : "report");
+  $("results-nav").scrollIntoView({ block: "nearest" });
+}
+
+function select(id, seek) {
+  if ($("list-sec").classList.contains("vhide")) showView("utterances");
+  document.querySelectorAll(".blk.sel, .utt.sel").forEach((el) => el.classList.remove("sel"));
+  const blk = $("blk-" + id), utt = $("utt-" + id);
+  if (blk) blk.classList.add("sel");
+  if (utt) {
+    utt.classList.add("sel");
+    utt.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  if (seek && utt) {
+    const a = utt.querySelector("a.t");
+    const player = $("player");
+    if (a && player.src) { player.currentTime = Number(a.dataset.t); player.play(); }
+  }
+}
+</script>
+</body>
+</html>

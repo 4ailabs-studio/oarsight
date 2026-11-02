@@ -53,3 +53,22 @@ Utterance coding and metrics, written from scratch:
 - `oarsight code` command (default: Spark with low reasoning effort).
 - 36 offline tests (10 new: verifier accept/reject, injection-as-data, metrics math and mode boundary, redaction, both coders with a stubbed model).
 - Real runs on the fictional consultation (36 utterances) with **both Muse Spark ($0.034) and Muse Spark Open on Baseten (private mode)**: 36/36 verified on both, same "brief" mode, same change-talk ratio (0.36), near-identical code counts.
+- Fireworks wired as a second private-mode engine (`--model fireworks`, `accounts/fireworks/models/muse-spark-open`); `oarsight check` passes on all three providers.
+
+## Day 7 — Mon, Nov 2 (continued)
+
+Minimal web interface, written from scratch:
+
+- `web.py`: FastAPI app. Upload an audio file, the pipeline (transcribe → roles/utterances → coding/metrics) runs as a background task, the page polls until done. Same JSON files as the CLI. Session ids are strictly validated; uploads capped at 100 MB.
+- `static/index.html`: one page, no framework, in Spanish. Consent checkbox before upload, stage progress, coverage banner, time-scaled two-lane timeline (clinician above, patient below; gray hatch = unverified), metrics, utterance list with code chips, audio player with click-to-seek. Fictional-data and no-medical-advice notices.
+- `oarsight serve` command (default http://127.0.0.1:8000).
+- 40 offline tests (4 new for the web API). Verified end to end in-process against the fictional session (36 utterances, 36 codes, audio served); JS syntax checked.
+- Supervisor (fixed version, single pass): `moments.py` generates up to 8 candidates in code (significant patient utterance + next clinician response, scored); `supervisor.py` picks up to 3 moments and proposes an alternative (≤ 20 words) for each, re-coded by the clinician coder and regenerated at most twice on mismatch. `oarsight supervise` command; moments shown on the page with verified/unverified badges. Real run on the fictional session with Wonder ($0.24): 8 candidates, 3 moments, all 3 alternatives verified on the first attempt.
+- 47 offline tests.
+- Live process signals on the page: the pipeline reports a `detail` message with real counts at every stage; the page shows an animated stepper (done ✓ / current pulsing), a progress bar, a timestamped activity log, an elapsed timer and a live dot. Honors `prefers-reduced-motion`.
+- In-browser recording: the upload card has "upload file" and "record live" tabs; recording uses the microphone with a level meter and timer, then goes through the same pipeline (ffmpeg converts the browser's webm/mp4).
+- Moments presentation reworked around MI: summary line ("Tienes N aciertos y M oportunidades"), aciertos first, every moment follows qué pasó → por qué importa → podrías decir with the skill named, why it works and its verification note, plus listen-to-fragment and view-in-transcript links. Strategy recorded as an HTML comment.
+- Expert report (`report.py`, Wonder): session pattern, up to 2 strengths with literal quotes (dropped when unverified, falling back to acierto moments), ONE skill chosen by code from the metrics, brief-EM tools in brief mode, and up to 4 conclusions. `oarsight report` command; report shown first on the page. Real run ($0.05): 2/2 strengths verified, grounded conclusions citing real numbers.
+- Results split into navigable views (report, moments, timeline, metrics, utterances): sticky nav with pills, prev/next, position counter and hash links; cross-links jump to the right view.
+- Clinical typography: IBM Plex Sans (400/500/600/700, latin), self-hosted under `static/fonts/` with its OFL license; tabular numerals for metric values; system sans as fallback.
+- 56 offline tests.
